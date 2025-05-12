@@ -6,13 +6,14 @@ const aj = arcjet({
   characteristics: ["ip.src"], // Track requests by IP
   rules: [
     shield({ mode: "LIVE" }),
-    detectBot({
-      mode: "LIVE", 
-      allow: [
-        "CATEGORY:SEARCH_ENGINE", // Google, Bing, etc
-        "CATEGORY:POSTMAN" //FOR DEVELOPMENT ONLY
-      ],
-    }),
+    ...(process.env.NODE_ENV === "development"
+      ? [] // Skip bot detection in development
+      : [
+          detectBot({
+            mode: "LIVE",
+            allow: ["CATEGORY:SEARCH_ENGINE"],
+          }),
+        ]),
     // Create a token bucket rate limit. Other algorithms are supported.
     tokenBucket({
       mode: "LIVE",
