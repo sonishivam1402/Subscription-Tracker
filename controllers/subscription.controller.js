@@ -2,6 +2,32 @@ import Subscription from "../models/subscription.model.js"
 import { SERVER_URL } from "../config/env.js";
 import { workflowClient } from "../config/upstash.js";
 
+
+export const getAllSubscriptions = async (req, res, next) => {
+    try {
+        const subscriptions = await Subscription.find().populate('user', 'name email');
+        res.status(200).json({ success: true, data: subscriptions });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const getSubscription = async (req, res, next) => {
+    try {
+        const subscription = await Subscription.findById(req.params.id).populate('user', 'name email');
+
+        if (!subscription) {
+            const error = new Error('Subscription not found');
+            error.statusCode = 404;
+            throw error;
+        }
+
+        res.status(200).json({ success: true, data: subscription });
+    } catch (error) {
+        next(error);
+    }
+};
+
 export const createSubscription = async (req, res, next) => {
     try {
         const subscription = await Subscription.create({
@@ -27,6 +53,42 @@ export const createSubscription = async (req, res, next) => {
     }
 }
 
+export const updateSubscription = async (req, res, next) => {
+    try {
+        const updatedSubscription = await Subscription.findByIdAndUpdate(
+            req.params.id,
+            req.body,
+            { new: true, runValidators: true }
+        );
+
+        if (!updatedSubscription) {
+            const error = new Error('Subscription not found');
+            error.statusCode = 404;
+            throw error;
+        }
+
+        res.status(200).json({ success: true, data: updatedSubscription });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const deleteSubscription = async (req, res, next) => {
+    try {
+        const deleted = await Subscription.findByIdAndDelete(req.params.id);
+
+        if (!deleted) {
+            const error = new Error('Subscription not found');
+            error.statusCode = 404;
+            throw error;
+        }
+
+        res.status(200).json({ success: true, message: 'Subscription deleted successfully' });
+    } catch (error) {
+        next(error);
+    }
+};
+
 
 export const getUserSubscriptions = async (req, res, next) => {
     try {
@@ -45,3 +107,39 @@ export const getUserSubscriptions = async (req, res, next) => {
         next(e)
     }
 }
+
+export const cancelSubscription = async (req, res, next) => {
+    try {
+        const subscription = await Subscription.findById(req.params.id);
+
+        if (!subscription) {
+            const error = new Error('Subscription not found');
+            error.statusCode = 404;
+            throw error;
+        }
+
+        subscription.status = 'cancelled'; // adjust based on your schema
+        await subscription.save();
+
+        res.status(200).json({ success: true, message: 'Subscription cancelled successfully' });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const getUpcomingRenewals = async (req, res, next) => {
+    try {
+        const today = new Date();
+        const nextWeek = new Date();
+        nextWeek.setDate(today.getDate() + 7);
+
+        const upcoming = await Subscription.find({
+            nextRenewalDate: { $gte: today, $lte: nextWeek },
+            status: 'active',
+        });
+
+        res.status(200).json({ success: true, data: upcoming });
+    } catch (error) {
+        next(error);
+    }
+};
