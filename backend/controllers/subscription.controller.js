@@ -35,18 +35,18 @@ export const createSubscription = async (req, res, next) => {
             user: req.user._id,
         });
 
-        const {workflowRunId} = await workflowClient.trigger({
-            url : `${SERVER_URL}/api/v1/workflows/subscription/reminder`,
-            body:{
-                subscriptionId : subscription.id,
+        const { workflowRunId } = await workflowClient.trigger({
+            url: `${SERVER_URL}/api/v1/workflows/subscription/reminder`,
+            body: {
+                subscriptionId: subscription.id,
             },
-            headers : {
-                'content-type' : 'application/json',
+            headers: {
+                'content-type': 'application/json',
             },
-            retries : 0
+            retries: 0
         })
 
-        res.status(201).json({ success: true, data: {subscription, workflowRunId} });
+        res.status(201).json({ success: true, data: { subscription, workflowRunId } });
 
     } catch (error) {
         next(error);
@@ -110,7 +110,12 @@ export const getUserSubscriptions = async (req, res, next) => {
 
 export const cancelSubscription = async (req, res, next) => {
     try {
-        const subscription = await Subscription.findById(req.params.id);
+        const subscription = await Subscription.findByIdAndUpdate(
+            req.params.id,
+            { status: 'cancelled' },
+            { new: true }
+        );
+
 
         if (!subscription) {
             const error = new Error('Subscription not found');
@@ -118,14 +123,17 @@ export const cancelSubscription = async (req, res, next) => {
             throw error;
         }
 
-        subscription.status = 'cancelled'; // adjust based on your schema
-        await subscription.save();
+        res.status(200).json({
+            success: true,
+            message: 'Subscription cancelled successfully',
+            data: subscription,
+        });
 
-        res.status(200).json({ success: true, message: 'Subscription cancelled successfully' });
     } catch (error) {
         next(error);
     }
 };
+
 
 export const getUpcomingRenewals = async (req, res, next) => {
     try {
