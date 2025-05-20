@@ -8,8 +8,15 @@ import errorMiddleware from './middlewares/error.middleware.js'
 import cookieParser from 'cookie-parser';
 import arcjetMiddleware from './middlewares/arcjet.middleware.js';
 import workflowRouter from './routes/workflow.routes.js';
+import cors from 'cors';
 
 const app = express();
+
+// Allow requests from your frontend origin (e.g., localhost:3000)
+app.use(cors({
+  origin: 'http://localhost:5173',
+  credentials: true // allow cookies or authorization headers
+}));
 
 app.use(express.json());
 app.use(express.urlencoded({extended: false}));
