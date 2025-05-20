@@ -58,7 +58,7 @@ export const updateSubscription = async (req, res, next) => {
         const updatedSubscription = await Subscription.findByIdAndUpdate(
             req.params.id,
             req.body,
-            { new: true, runValidators: true }
+            { new: true, runValidators: true , context : 'query'}
         );
 
         if (!updatedSubscription) {

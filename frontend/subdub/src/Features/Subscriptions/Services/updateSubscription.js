@@ -2,6 +2,7 @@ import React from 'react'
 import axios from 'axios'
 
 const updateSubscription = async (id, data) => {
+    console.log("data : ",data)
   const token = localStorage.getItem("token"); 
     try {
         const response = await axios.put(`${import.meta.env.VITE_SERVER_URL}/api/v1/subscriptions/${id}`,data,{

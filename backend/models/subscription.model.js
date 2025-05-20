@@ -43,16 +43,26 @@ const subscriptionSchema = new mongoose.Schema({
         validate: {
             validator: (value) => value <= new Date(),
             message: 'Start date must be in the past',
-        }
+        },
     },
     renewalDate: {
         type: Date,
         validate: {
             validator: function (value) {
-                return value > this.startDate;
+                // Handle document creation (this is a Mongoose document)
+                if (!(this instanceof mongoose.Query)) {
+                    return value > this.startDate;
+                }
+
+                // Handle updates (this is a Mongoose Query)
+                const update = this.getUpdate();
+                const startDate = update.startDate || this._conditions.startDate;
+
+                if (!startDate) return true; // skip if we don't have startDate
+                return value > startDate;
             },
             message: 'Renewal date must be after the start date',
-        }
+        },
     },
     user: {
         type: mongoose.Schema.Types.ObjectId,
@@ -79,7 +89,7 @@ subscriptionSchema.pre('save', function (next) {
     }
 
     // Auto-update the status if renewal date has passed
-    if(this.renewalDate < new Date()){
+    if (this.renewalDate < new Date()) {
         this.status = 'expired';
     }
 
